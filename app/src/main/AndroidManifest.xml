@@ -13,6 +13,9 @@
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
+                <action android:name="android.content.action.ACTION_OPEN_DOCUMENT" />
+                <action android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
     </application>
