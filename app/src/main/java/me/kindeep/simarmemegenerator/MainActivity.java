@@ -1,5 +1,7 @@
 package me.kindeep.simarmemegenerator;
 
+import android.graphics.Rect;
+import android.support.v4.graphics.BitmapCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.SparseArray;
@@ -44,26 +46,33 @@ public class MainActivity extends AppCompatActivity {
         ImageView myImageView = (ImageView) findViewById(R.id.imgview);
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inMutable = true;
-        Bitmap myBitmap = BitmapFactory.decodeResource(
+        Bitmap base_image_temp = BitmapFactory.decodeResource(
                 getApplicationContext().getResources(),
                 R.raw.lead_720_405,
                 options);
 
-        Bitmap tempBitmap = Bitmap.createBitmap(myBitmap.getWidth(), myBitmap.getHeight(), Bitmap.Config.RGB_565);
-        Canvas tempCanvas = new Canvas(tempBitmap);
-        tempCanvas.drawBitmap(myBitmap, 0, 0, null);
+        Bitmap resultBitmap = Bitmap.createBitmap(base_image_temp.getWidth(), base_image_temp.getHeight(), Bitmap.Config.RGB_565);
+
+        Canvas resultCanvas = new Canvas(resultBitmap);
+        resultCanvas.drawBitmap(base_image_temp, 0, 0, null);
+
+        Bitmap simar_temp = BitmapFactory.decodeResource(
+                getApplicationContext().getResources(),
+                R.drawable.simar,
+                options);
+
+        Bitmap simarBitmap = Bitmap.createBitmap(simar_temp.getWidth(), simar_temp.getHeight(), Bitmap.Config.RGB_565);
 
         FaceDetector faceDetector = new
                 FaceDetector.Builder(this).setTrackingEnabled(false)
                 .build();
         if (!faceDetector.isOperational()) {
 //            new AlertDialog.Builder(getApplicationContext()).setMessage("Could not set up the face detector!").show();d\\
-
             Toast.makeText(this, "Could not set up face detector!", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        Frame frame = new Frame.Builder().setBitmap(myBitmap).build();
+        Frame frame = new Frame.Builder().setBitmap(base_image_temp).build();
         SparseArray<Face> faces = faceDetector.detect(frame);
 
         Paint myRectPaint = new Paint();
@@ -75,10 +84,19 @@ public class MainActivity extends AppCompatActivity {
             float y1 = thisFace.getPosition().y;
             float x2 = x1 + thisFace.getWidth();
             float y2 = y1 + thisFace.getHeight();
-            tempCanvas.drawRoundRect(new RectF(x1, y1, x2, y2), 2, 2, myRectPaint);
+
+            float x_left = x1 - thisFace.getWidth() / 2;
+            float y_top = x1 - thisFace.getHeight() / 2;
+            Bitmap temp_bitmap_simar = Bitmap.createBitmap((int) thisFace.getWidth(), (int) thisFace.getHeight(), Bitmap.Config.RGB_565);
+
+//            resultCanvas.drawRoundRect(new RectF(x1, y1, x2, y2), 2, 2, myRectPaint);
+            resultCanvas.drawBitmap(simar_temp, x1, y1, null);
+//            resultCanvas.drawBitmap(simar_temp, new Rect(0, 0, simar_temp.getHeight(), simar_temp.getWidth()), new Rect((int) x1, (int) y1, (int) x2, (int) y2), null);
+
+
         }
 
-        myImageView.setImageDrawable(new BitmapDrawable(getResources(), tempBitmap));
+        myImageView.setImageDrawable(new BitmapDrawable(getResources(), resultBitmap));
 
     }
 }
