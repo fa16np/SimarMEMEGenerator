@@ -1,5 +1,6 @@
 package me.kindeep.simarmemegenerator;
 
+import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.support.v4.graphics.BitmapCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -49,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
         Bitmap base_image_temp = BitmapFactory.decodeResource(
                 getApplicationContext().getResources(),
                 R.raw.lead_720_405,
+//                R.drawable.praam,
                 options);
 
         Bitmap resultBitmap = Bitmap.createBitmap(base_image_temp.getWidth(), base_image_temp.getHeight(), Bitmap.Config.RGB_565);
@@ -89,14 +91,26 @@ public class MainActivity extends AppCompatActivity {
             float y_top = x1 - thisFace.getHeight() / 2;
             Bitmap temp_bitmap_simar = Bitmap.createBitmap((int) thisFace.getWidth(), (int) thisFace.getHeight(), Bitmap.Config.RGB_565);
 
-//            resultCanvas.drawRoundRect(new RectF(x1, y1, x2, y2), 2, 2, myRectPaint);
-            resultCanvas.drawBitmap(simar_temp, x1, y1, null);
-//            resultCanvas.drawBitmap(simar_temp, new Rect(0, 0, simar_temp.getHeight(), simar_temp.getWidth()), new Rect((int) x1, (int) y1, (int) x2, (int) y2), null);
-
-
+            resultCanvas.drawBitmap(getResizedBitmap(simar_temp, (int)thisFace.getWidth(), (int)thisFace.getHeight()), x1, y1, null);
         }
 
         myImageView.setImageDrawable(new BitmapDrawable(getResources(), resultBitmap));
 
+    }
+
+    public Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
+        int width = bm.getWidth();
+        int height = bm.getHeight();
+        float scaleWidth = ((float) newWidth) / width;
+        float scaleHeight = ((float) newHeight) / height;
+        // CREATE A MATRIX FOR THE MANIPULATION
+        Matrix matrix = new Matrix();
+        // RESIZE THE BIT MAP
+        matrix.postScale(scaleWidth, scaleHeight);
+        // "RECREATE" THE NEW BITMAP
+        Bitmap resizedBitmap = Bitmap.createBitmap(
+                bm, 0, 0, width, height, matrix, false);
+//        bm.recycle();
+        return resizedBitmap;
     }
 }
