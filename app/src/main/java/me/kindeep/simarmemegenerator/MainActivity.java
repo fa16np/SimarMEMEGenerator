@@ -26,36 +26,63 @@ public class MainActivity extends AppCompatActivity {
 
     final int OPEN_FILE = 1;
 
+    //First method get opened when you run app
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_main);  //setting current veiw
 
+        //Making a button
         Button open = findViewById(R.id.load_button);
+
+        //Opening file
         open.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                //Message for the user
                 showToast("OPEN FILE GOD DAMNIT");
-                Intent getIntent = new Intent(Intent.ACTION_GET_CONTENT);
-                getIntent.setType("image/*");
 
-                Intent pickIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                pickIntent.setType("image/*");
+                //Intent for opening a file
+                selectImageFromGallery();
 
-                Intent chooserIntent = Intent.createChooser(getIntent, "Select Image");
-                chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{pickIntent});
 
-                startActivityForResult(chooserIntent, OPEN_FILE);
+
+//
+//                Intent chooserIntent = Intent.createChooser(getIntent, "Select Image");
+//                chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{pickIntent});
+//
+//                startActivityForResult(chooserIntent, OPEN_FILE);
             }
         });
 
+//        uploadButton.setOnClickListener(new OnClickListener() {
+//
+//            @Override
+//            public void onClick(View v) {
+//                // new ImageUploadTask().execute();
+//                Toast.makeText(MainActivity.this, "clicked", Toast.LENGTH_SHORT)
+//                        .show();
+//                uploadTask();
+//            }
+//        });
+//    }
+
+
+
+
+
+    //Using face detector for detecting all the faces in the photo
         FaceDetector detector = new FaceDetector.Builder(getApplicationContext())
                 .setProminentFaceOnly(true)
                 .build();
 
+
+        //Image veiw for showing images
         imageView = (ImageView) findViewById(R.id.imgview);
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inMutable = true;
+
         Bitmap base_image_temp = BitmapFactory.decodeResource(
                 getApplicationContext().getResources(),
                 R.raw.lead_720_405,
@@ -64,8 +91,10 @@ public class MainActivity extends AppCompatActivity {
 
         Bitmap resultBitmap = Bitmap.createBitmap(base_image_temp.getWidth(), base_image_temp.getHeight(), Bitmap.Config.RGB_565);
 
+        //Making canvas for image editing and then showing it later
         Canvas resultCanvas = new Canvas(resultBitmap);
         resultCanvas.drawBitmap(base_image_temp, 0, 0, null);
+
 
         Bitmap simar_temp = BitmapFactory.decodeResource(
                 getApplicationContext().getResources(),
@@ -83,12 +112,17 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+
         Frame frame = new Frame.Builder().setBitmap(base_image_temp).build();
+
+        //All the faces
         SparseArray<Face> faces = faceDetector.detect(frame);
 
+        //Making paint tool
         Paint myRectPaint = new Paint();
 //        myRectPaint.setColor(70);
 
+        //Running for loop on faces to edit and editing it one by one
         for (int i = 0; i < faces.size(); i++) {
             Face thisFace = faces.valueAt(i);
             float x1 = thisFace.getPosition().x;
@@ -106,6 +140,12 @@ public class MainActivity extends AppCompatActivity {
         imageView.setImageDrawable(new BitmapDrawable(getResources(), resultBitmap));
 
     }
+
+
+    public void selectImageFromGallery(){
+        Intent galleryIntent = new Intent(Intent.ACTION_PICK,
+                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        startActivityForResult(galleryIntent, OPEN_FILE);}
 
     void setImageViewBitmap(Bitmap bitmap) {
         imageView.setImageDrawable(new BitmapDrawable(getResources(), bitmap));
