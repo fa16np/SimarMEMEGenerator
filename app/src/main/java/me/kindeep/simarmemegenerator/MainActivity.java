@@ -2,6 +2,7 @@ package me.kindeep.simarmemegenerator;
 
 import android.content.Intent;
 import android.graphics.Matrix;
+import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -21,93 +22,78 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+
 public class MainActivity extends AppCompatActivity {
     ImageView imageView;
 
+    Bitmap simar_temp;
+
+    Bitmap base_image_temp;  //Main Image
+
     final int OPEN_FILE = 1;
 
-    //First method get opened when you run app
+    //First method get opened when you run app--------------------
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);  //setting current veiw
 
-        //Making a button
+        //Making a button----------------------------------------
         Button open = findViewById(R.id.load_button);
 
-        //Opening file
+
+
+        //click listener for button--------------------------------
         open.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
-                //Message for the user
-                showToast("OPEN FILE GOD DAMNIT");
+                showToast("SELECT FILE GOD DAMNIT");
 
-                //Intent for opening a file
                 selectImageFromGallery();
 
-
-
-//
-//                Intent chooserIntent = Intent.createChooser(getIntent, "Select Image");
-//                chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{pickIntent});
-//
-//                startActivityForResult(chooserIntent, OPEN_FILE);
             }
         });
 
-//        uploadButton.setOnClickListener(new OnClickListener() {
-//
-//            @Override
-//            public void onClick(View v) {
-//                // new ImageUploadTask().execute();
-//                Toast.makeText(MainActivity.this, "clicked", Toast.LENGTH_SHORT)
-//                        .show();
-//                uploadTask();
-//            }
-//        });
-//    }
 
-
-
-
-
-    //Using face detector for detecting all the faces in the photo
+        //Using face detector for detecting all the faces in the photo--------
         FaceDetector detector = new FaceDetector.Builder(getApplicationContext())
                 .setProminentFaceOnly(true)
                 .build();
 
 
-        //Image veiw for showing images
+
+        //Image veiw for showing images---------------------------------------
         imageView = (ImageView) findViewById(R.id.imgview);
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inMutable = true;
 
-        Bitmap base_image_temp = BitmapFactory.decodeResource(
+        base_image_temp = BitmapFactory.decodeResource(
                 getApplicationContext().getResources(),
                 R.raw.lead_720_405,
-//                R.drawable.praam,
                 options);
 
         Bitmap resultBitmap = Bitmap.createBitmap(base_image_temp.getWidth(), base_image_temp.getHeight(), Bitmap.Config.RGB_565);
 
-        //Making canvas for image editing and then showing it later
+
+
+        //Making canvas for image editing and then showing it later----------
         Canvas resultCanvas = new Canvas(resultBitmap);
         resultCanvas.drawBitmap(base_image_temp, 0, 0, null);
 
 
-        Bitmap simar_temp = BitmapFactory.decodeResource(
+        simar_temp = BitmapFactory.decodeResource(
                 getApplicationContext().getResources(),
                 R.drawable.simar,
                 options);
 
-        Bitmap simarBitmap = Bitmap.createBitmap(simar_temp.getWidth(), simar_temp.getHeight(), Bitmap.Config.RGB_565);
 
         FaceDetector faceDetector = new
                 FaceDetector.Builder(this).setTrackingEnabled(false)
                 .build();
         if (!faceDetector.isOperational()) {
-//            new AlertDialog.Builder(getApplicationContext()).setMessage("Could not set up the face detector!").show();d\\
             Toast.makeText(this, "Could not set up face detector!", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -115,14 +101,11 @@ public class MainActivity extends AppCompatActivity {
 
         Frame frame = new Frame.Builder().setBitmap(base_image_temp).build();
 
-        //All the faces
+        //All the faces-----------------------------------------------------
         SparseArray<Face> faces = faceDetector.detect(frame);
 
-        //Making paint tool
-        Paint myRectPaint = new Paint();
-//        myRectPaint.setColor(70);
 
-        //Running for loop on faces to edit and editing it one by one
+        //Running for loop on faces to edit and editing it one by one--------
         for (int i = 0; i < faces.size(); i++) {
             Face thisFace = faces.valueAt(i);
             float x1 = thisFace.getPosition().x;
@@ -142,15 +125,46 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void selectImageFromGallery(){
+    /*
+    * Selects image from gallery and loads it for the processing
+    * */
+    public void  selectImageFromGallery(){
         Intent galleryIntent = new Intent(Intent.ACTION_PICK,
                 android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        startActivityForResult(galleryIntent, OPEN_FILE);}
+        startActivityForResult(galleryIntent, OPEN_FILE);
+    }
 
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if( requestCode == OPEN_FILE){
+            Toast.makeText(this, "YES", Toast.LENGTH_LONG).show();
+            Uri imageData = data.getData();
+            try {
+                InputStream inputStream = getContentResolver().openInputStream(imageData);
+
+                setImageViewBitmap(BitmapFactory.decodeStream(inputStream));
+
+
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                Toast.makeText(this, "Wasnt able to open Image! :(", Toast.LENGTH_LONG).show();
+            }
+
+        }
+    }
+
+
+
+
+
+
+    //Setting image veiw
     void setImageViewBitmap(Bitmap bitmap) {
         imageView.setImageDrawable(new BitmapDrawable(getResources(), bitmap));
     }
 
+    //Fo bitmap image resizing
     public Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
         int width = bm.getWidth();
         int height = bm.getHeight();
@@ -163,26 +177,19 @@ public class MainActivity extends AppCompatActivity {
         // "RECREATE" THE NEW BITMAP
         Bitmap resizedBitmap = Bitmap.createBitmap(
                 bm, 0, 0, width, height, matrix, false);
-//        bm.recycle();
         return resizedBitmap;
     }
 
+
+    //To show the text "Select file god damn it
     void showToast(Object a) {
         Toast.makeText(this, a.toString(), Toast.LENGTH_SHORT).show();
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == OPEN_FILE) {
-            final Bundle extras = data.getExtras();
-            if (extras != null) {
-                //Get image
-                Bitmap image = extras.getParcelable("data");
-                setImageViewBitmap(image);
-            }
-        }
-    }
 
+
+
+    //--------------------------------------------Coming soon!
     public void FromCamera() {
 
 //        Log.i("camera", "startCameraActivity()");
