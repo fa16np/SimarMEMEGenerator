@@ -143,7 +143,9 @@ public class MainActivity extends AppCompatActivity {
             try {
                 InputStream inputStream = getContentResolver().openInputStream(imageData);
 
-                setImageViewBitmap(BitmapFactory.decodeStream(inputStream));
+                Bitmap temp = BitmapFactory.decodeStream(inputStream);
+
+                setImageViewBitmap(temp);
 
 
             } catch (FileNotFoundException e) {
