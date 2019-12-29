@@ -32,6 +32,8 @@ public class MainActivity extends AppCompatActivity {
 
     Bitmap base_image_temp;  //Main Image
 
+    FaceDetector faceDetector;
+
     final int OPEN_FILE = 1;
 
     //First method get opened when you run app--------------------
@@ -58,23 +60,19 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-        //Using face detector for detecting all the faces in the photo--------
-        FaceDetector detector = new FaceDetector.Builder(getApplicationContext())
-                .setProminentFaceOnly(true)
-                .build();
-
-
-
         //Image veiw for showing images---------------------------------------
         imageView = (ImageView) findViewById(R.id.imgview);
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inMutable = true;
 
+        //The base image for showing when app opens
         base_image_temp = BitmapFactory.decodeResource(
                 getApplicationContext().getResources(),
                 R.raw.lead_720_405,
                 options);
 
+
+        //The resulting bitmap after face swapping
         Bitmap resultBitmap = Bitmap.createBitmap(base_image_temp.getWidth(), base_image_temp.getHeight(), Bitmap.Config.RGB_565);
 
 
@@ -83,14 +81,13 @@ public class MainActivity extends AppCompatActivity {
         Canvas resultCanvas = new Canvas(resultBitmap);
         resultCanvas.drawBitmap(base_image_temp, 0, 0, null);
 
-
+        //It is the image that would be swapped with original
         simar_temp = BitmapFactory.decodeResource(
                 getApplicationContext().getResources(),
-                R.drawable.simar,
-                options);
+                R.drawable.simar, options);
 
-
-        FaceDetector faceDetector = new
+        //The actual face detector
+        faceDetector = new
                 FaceDetector.Builder(this).setTrackingEnabled(false)
                 .build();
         if (!faceDetector.isOperational()) {
@@ -98,10 +95,18 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        detectFaceSwapAndShow(resultBitmap,resultCanvas);
 
+    }
+
+
+    //Face detection and swaping
+    public void detectFaceSwapAndShow(Bitmap resultBitmap, Canvas resultCanvas){
+
+        //Frame builder for editing image
         Frame frame = new Frame.Builder().setBitmap(base_image_temp).build();
 
-        //All the faces-----------------------------------------------------
+        //All the faces detected-----------------------------------------------------
         SparseArray<Face> faces = faceDetector.detect(frame);
 
 
@@ -110,18 +115,12 @@ public class MainActivity extends AppCompatActivity {
             Face thisFace = faces.valueAt(i);
             float x1 = thisFace.getPosition().x;
             float y1 = thisFace.getPosition().y;
-            float x2 = x1 + thisFace.getWidth();
-            float y2 = y1 + thisFace.getHeight();
 
-            float x_left = x1 - thisFace.getWidth() / 2;
-            float y_top = x1 - thisFace.getHeight() / 2;
-            Bitmap temp_bitmap_simar = Bitmap.createBitmap((int) thisFace.getWidth(), (int) thisFace.getHeight(), Bitmap.Config.RGB_565);
+            resultCanvas.drawBitmap(getResizedBitmap(simar_temp, (int) thisFace.getWidth()-5, (int) thisFace.getHeight()+150), x1+10, y1-90, null);
 
-            resultCanvas.drawBitmap(getResizedBitmap(simar_temp, (int) thisFace.getWidth(), (int) thisFace.getHeight()), x1, y1, null);
         }
 
         imageView.setImageDrawable(new BitmapDrawable(getResources(), resultBitmap));
-
     }
 
 
@@ -145,7 +144,19 @@ public class MainActivity extends AppCompatActivity {
 
                 Bitmap temp = BitmapFactory.decodeStream(inputStream);
 
-                setImageViewBitmap(temp);
+                //The base image for showing when app opens
+                base_image_temp = temp;
+
+                //The resulting bitmap after face swapping
+                Bitmap resultBitmap = Bitmap.createBitmap(base_image_temp.getWidth(), base_image_temp.getHeight(), Bitmap.Config.RGB_565);
+
+                //Making canvas for image editing and then showing it later----------
+                Canvas resultCanvas = new Canvas(resultBitmap);
+                resultCanvas.drawBitmap(base_image_temp, 0, 0, null);
+
+
+                detectFaceSwapAndShow(resultBitmap,resultCanvas);
+
 
 
             } catch (FileNotFoundException e) {
@@ -160,11 +171,6 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-
-    //Setting image veiw
-    void setImageViewBitmap(Bitmap bitmap) {
-        imageView.setImageDrawable(new BitmapDrawable(getResources(), bitmap));
-    }
 
     //Fo bitmap image resizing
     public Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
